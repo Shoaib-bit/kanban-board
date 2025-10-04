@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import type { User } from "@/types/user";
+import { redirect } from "react-router";
 
 export const getUser = (): User | null => {
   const raw = localStorage.getItem("user");
@@ -12,4 +13,17 @@ export const isAuthenticated = (): boolean => {
   const accessToken = Cookies.get(ACCESS_COOKIE);
   if (accessToken) return true;
   else return false;
+};
+
+export const getAccessToken = (): string | null => {
+  const accessToken = Cookies.get(ACCESS_COOKIE);
+  if (accessToken) {
+    return accessToken;
+  } else return null;
+};
+
+export const logout = (): void => {
+  Cookies.remove(ACCESS_COOKIE);
+  localStorage.removeItem("user");
+  redirect("/login");
 };

@@ -8,10 +8,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useState } from "react";
+import { http } from "@/lib/http";
+import { Loader } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+import { toast } from "sonner";
 
 const schema = yup.object().shape({
   email: yup.string().email().required(),
@@ -20,7 +26,7 @@ const schema = yup.object().shape({
     .required("Password is required")
     .min(8, "Password must be at least 8 characters")
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).+$/,
       "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character"
     ),
 });
@@ -40,11 +46,27 @@ const LoginPage = () => {
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = (data: LoginData) => {
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: LoginData) => {
     try {
-      console.log(data);
+      setLoading(true);
+      const res = await http.post("/login", data);
+
+      if (res.data.data) {
+        login(res.data.data.accessToken, res.data.data.user);
+        toast.success("Login Successfully");
+        navigate("/");
+      }
     } catch (error) {
-      console.log(error);
+      if (axios.isAxiosError(error)) {
+        console.log(error.response);
+        toast.error(error.response?.data?.data?.message || "Failed to login");
+      }
+    } finally {
+      setLoading(false);
       reset();
     }
   };
@@ -90,7 +112,9 @@ const LoginPage = () => {
                   <p className="text-red-500">{errors.password?.message}</p>
                 )}
               </div>
-              <Button className="w-full">Login</Button>
+              <Button className="w-full" disabled={loading}>
+                {loading ? <Loader className="animate-spin" /> : "Login"}
+              </Button>
             </div>
             <div className="mt-6">
               <p>
