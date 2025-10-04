@@ -10,6 +10,11 @@ export const router = createBrowserRouter([
     loader: noAuth,
     element: lazy(() => import("@/pages/auth/LoginPage")),
   },
+  {
+    path: "/signup",
+    loader: noAuth,
+    element: lazy(() => import("@/pages/auth/SignupPage")),
+  },
 
   {
     id: "userRoot",
