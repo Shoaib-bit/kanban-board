@@ -1,10 +1,15 @@
 import { createBrowserRouter } from "react-router";
-import { requireAuth } from "./guards";
+import { noAuth, requireAuth } from "./guards";
 import { lazy } from "./lazy";
 import { WebLayout } from "@/components/layout/WebLayout";
+import NotFoundPage from "@/pages/NotFoundPage";
 
 export const router = createBrowserRouter([
-  { path: "/login", element: lazy(() => import("@/pages/auth/LoginPage")) },
+  {
+    path: "/login",
+    loader: noAuth,
+    element: lazy(() => import("@/pages/auth/LoginPage")),
+  },
 
   {
     id: "userRoot",
@@ -14,4 +19,6 @@ export const router = createBrowserRouter([
       { index: true, element: lazy(() => import("@/pages/web/HomePage")) },
     ],
   },
+  // catch-all for unknown routes
+  { path: "*", element: <NotFoundPage /> },
 ]);
