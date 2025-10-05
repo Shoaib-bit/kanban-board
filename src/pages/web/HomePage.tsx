@@ -1,7 +1,9 @@
+import { TaskList } from "@/components/TaskList";
+
 const HomePage = () => {
   return (
-    <div>
-      <p>Home Page</p>
+    <div className="px-12 py-4">
+      <TaskList />
     </div>
   );
 };
