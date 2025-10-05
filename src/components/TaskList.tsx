@@ -57,7 +57,9 @@ export const TaskList = () => {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-8">
         {loading ? (
-          <Loader2 className="animate-spin" />
+          <div className="w-full flex justify-center items-center">
+            <Loader2 className="animate-spin" />
+          </div>
         ) : (
           columns.map((col) => {
             const filterTasks = tasks.filter((t) => t.status === col.id);
