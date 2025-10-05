@@ -17,6 +17,7 @@ import { useAddTask } from "@/hooks/useAddTask";
 import * as yup from "yup";
 import { Textarea } from "./ui/textarea";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type TaskFormValues = {
   title: string;
@@ -54,6 +55,9 @@ export function AddTask({ status }: { status: Status }) {
     addTask.mutate(taskData, {
       onSuccess: () => {
         reset();
+      },
+      onError: () => {
+        toast.error("Failed to add task");
       },
     });
   };
