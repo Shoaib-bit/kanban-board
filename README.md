@@ -33,7 +33,7 @@ This project uses Vite environment variables. Create a `.env` file at the projec
 - `VITE_API_URL` (required) — Base URL of the backend API the frontend will call. Example:
 
 ```
-VITE_API_URL=http://localhost:4000/api
+VITE_API_URL=http://localhost:8000/api
 ```
 
 Notes:
@@ -89,24 +89,6 @@ npm run lint
 - The axios instance in `src/lib/http.ts` uses `import.meta.env.VITE_API_URL` as `baseURL`.
 - Authorization tokens are read via helpers in `src/lib/helper.ts` and attached to outgoing requests.
 - If the API returns 401 Unauthorized, the helper logic will call `logout()` to clear stored auth and redirect to login.
-
-## Quick local backend options (for development)
-
-If you don't have a backend ready, use a simple mock:
-
-- json-server (quick mock REST API):
-
-```bash
-# install (globally or dev dependency)
-npm install -g json-server
-
-# create a simple db.json and run
-json-server --watch db.json --port 4000
-```
-
-Then set `VITE_API_URL` to `http://localhost:4000` (or `http://localhost:4000/api` depending on your mock routing).
-
-- Or write a tiny Express mock to match the endpoints the frontend expects.
 
 ## Common issues & troubleshooting
 
