@@ -7,6 +7,13 @@ import type { Status, Task } from "@/types/tasks";
 import { AddTask } from "./AddTask";
 import { DeleteTask } from "./DeleteTask";
 import { UpdateTask } from "./UpdateTask";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import { useUpdateTask } from "@/hooks/useUpdateTask";
 
 const columns: { id: Status; title: string }[] = [
   { id: "todo", title: "To Do" },
@@ -16,63 +23,96 @@ const columns: { id: Status; title: string }[] = [
 
 export const TaskList = () => {
   const { data, isFetching: loading } = useGetTasks();
-
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { mutate } = useUpdateTask();
+
   useEffect(() => {
-    if (data) {
-      setTasks(data);
-    }
+    if (data) setTasks(data);
   }, [data]);
 
-  return (
-    <div className="flex gap-8">
-      {loading ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        columns.map((data: { id: Status; title: string }) => {
-          const filterTasks: Task[] = tasks.filter(
-            (task) => task.status == data.id
-          );
-          return <Columns columnData={data} list={filterTasks} key={data.id} />;
-        })
-      )}
-    </div>
-  );
-};
+  // Handle Drag + Drop
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
 
-const Columns = ({
-  columnData,
-  list,
-}: {
-  columnData: {
-    id: Status;
-    title: string;
+    // Only change column (no reorder inside same col)
+    if (source.droppableId === destination.droppableId) return;
+
+    const taskId = Number(draggableId);
+    const newStatus = destination.droppableId as Status;
+
+    // Optimistic update UI
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    );
+
+    // API call update
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      mutate({ ...task, status: newStatus });
+    }
   };
-  list: Task[];
-}) => {
+
   return (
-    <Card className="w-[400px]">
-      <CardHeader>
-        <p className="font-bold text-lg">{columnData.title}</p>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4 max-h-[400px] overflow-auto">
-        {list.map((listData) => (
-          <Task taskData={listData} key={listData.id} />
-        ))}
-      </CardContent>
-      <CardFooter>
-        <AddTask status={columnData.id} />
-      </CardFooter>
-    </Card>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-8">
+        {loading ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          columns.map((col) => {
+            const filterTasks = tasks.filter((t) => t.status === col.id);
+            return (
+              <Droppable droppableId={col.id} key={col.id}>
+                {(provided) => (
+                  <Card
+                    className="w-[400px]"
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                  >
+                    <CardHeader>
+                      <p className="font-bold text-lg">{col.title}</p>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4 max-h-[400px] overflow-auto">
+                      {filterTasks.map((task, index) => (
+                        <Draggable
+                          draggableId={task.id.toString()}
+                          index={index}
+                          key={task.id}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <Task taskData={task} />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </CardContent>
+                    <CardFooter>
+                      <AddTask status={col.id} />
+                    </CardFooter>
+                  </Card>
+                )}
+              </Droppable>
+            );
+          })
+        )}
+      </div>
+    </DragDropContext>
   );
 };
 
+// Single Task
 const Task = ({ taskData }: { taskData: Task }) => {
   return (
     <Card className="w-full min-h-[150px] p-0 flex flex-col gap-0 justify-start">
       <CardHeader className="p-4 pb-1">
         <div className="flex justify-between">
-          <p className="font-medium ">{taskData.title}</p>
+          <p className="font-medium">{taskData.title}</p>
           <div className="flex justify-between items-center gap-4">
             <DeleteTask id={taskData.id} />
             <UpdateTask task={taskData} />
